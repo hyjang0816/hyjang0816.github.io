@@ -19,6 +19,7 @@ section {
   padding: 40px;
   text-align: center;
   color: #fff;
+  height: 100vh; /* 화면 높이 100% 채우기 */
 }
 
 section h2 {
@@ -35,7 +36,7 @@ section h3 {
 
 section p,
 section ul li {
-  font-size: 1.2rem;
+  font-size: 1.5rem; /* 텍스트 크기 조정 */
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
   margin-bottom: 10px;
 }
@@ -44,6 +45,7 @@ section ul {
   list-style-type: disc;
   text-align: left;
   max-width: 800px;
+  padding-left: 20px;
 }
 
 section ul li {
@@ -59,6 +61,7 @@ section ul li {
   background-blend-mode: overlay;
   color: white;
   padding: 100px 0;
+  height: 100vh; /* 한 페이지 채우기 */
 }
 
 /* 각 프로젝트 섹션 배경 */
@@ -68,6 +71,7 @@ section ul li {
   background-color: rgba(0, 0, 0, 0.5);
   background-blend-mode: overlay;
   color: white;
+  height: 100vh; /* 한 페이지 채우기 */
 }
 
 #section2 {
@@ -76,6 +80,7 @@ section ul li {
   background-color: rgba(0, 0, 0, 0.5);
   background-blend-mode: overlay;
   color: white;
+  height: 100vh; /* 한 페이지 채우기 */
 }
 
 #section3 {
@@ -84,6 +89,7 @@ section ul li {
   background-color: rgba(0, 0, 0, 0.5);
   background-blend-mode: overlay;
   color: white;
+  height: 100vh; /* 한 페이지 채우기 */
 }
 
 footer {
