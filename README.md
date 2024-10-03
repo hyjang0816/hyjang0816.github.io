@@ -29,13 +29,13 @@
 - **주요 업무**
 - **퇴직공제 시스템**: 성립신고 중복 신청 방지, 근로내역 신고 직종변경 기능 개발
 - **하나로 시스템**: 전자카드 로그인 및 계좌 연동, 미상환 대부금 자동 상환 및 승인 처리 개발
-- **기능플러스 시스템**: 나이스 본인인증 기능 개선, 보유증명서 발급 기능 개선
-- **개인정보접속기록관리 시스템 구축**: Apache Cassandra 연동, 개인정보접근 이력 관리, 엑셀 다운로드 기능 개발
+- **기능플러스 시스템**: 나이스 본인인증 기능 개선, 보유증명서 발급 기능 개선, 등급 산정식 기준 변경, 기능등급증명서 일괄발급 기능 개발
+- **개인정보접속기록관리 시스템 구축**: Apache Cassandra 연동, 개인정보접근 이력 관리, 공통 팝업 개발
 
 - **기술 스택**: Java, Spring Framework, Apache Cassandra
 
 ## 연락처
 - **Email**: hy015796@gmail.com
-- **GitHub**: [hyjang0816](https://github.com/hyjang0816/myPortfolio.git)
-
+- **GitHub**: [Repository](https://github.com/hyjang0816/myPortfolio.git)
+- **Link**: [Portfolio](https://hyjang0816.github.io/myPortfolio)
 ---
