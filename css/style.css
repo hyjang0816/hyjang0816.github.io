@@ -79,15 +79,6 @@ section ul li {
 }
 
 #section2 {
-  background: url("/img/abhishek-kirloskar-ncqwTBV5qCA-unsplash.jpg") no-repeat
-    center center/cover;
-  background-color: rgba(0, 0, 0, 0.5);
-  background-blend-mode: overlay;
-  color: white;
-  height: 100vh; /* 한 페이지 채우기 */
-}
-
-#section3 {
   background: url("/img/leif-christoph-gottwald-iM8dxccK1sY-unsplash.jpg")
     no-repeat center center/cover;
   background-color: rgba(0, 0, 0, 0.5);
