@@ -34,6 +34,10 @@ section h3 {
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
+section p {
+  padding: 20px;
+}
+
 section p,
 section ul li {
   font-size: 1.5rem; /* 텍스트 크기 조정 */
