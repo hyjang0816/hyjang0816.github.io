@@ -57,6 +57,10 @@ section ul li {
   color: #fff;
 }
 
+section hr {
+  margin-bottom: 20px;
+}
+
 /* 자기소개 배경 */
 #introduction {
   background: url("/img/scott-graham-OQMZwNd3ThU-unsplash.jpg") no-repeat center
