@@ -36,6 +36,6 @@
 
 ## 연락처
 - **Email**: hy015796@gmail.com
-- **GitHub**: [hyjang0816]([https://github.com/yourgithub](https://hyjang0816.github.io/myPortfolio/))
+- **GitHub**: [hyjang0816](https://hyjang0816.github.io/myPortfolio/)
 
 ---
