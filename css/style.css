@@ -12,54 +12,87 @@ body {
 }
 
 section {
-  height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  position: relative;
-  color: white;
+  padding: 40px;
   text-align: center;
-  font-size: 2rem;
+  color: #fff;
+}
+
+section h2 {
+  margin-bottom: 20px;
+  font-size: 2.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 section h3 {
   margin-bottom: 20px;
   font-size: 2rem;
-}
-
-section h2 {
-  margin-bottom: 20px;
-  font-size: 3rem;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-section p {
+section p,
+section ul li {
   font-size: 1.2rem;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  margin-bottom: 10px;
 }
 
-/* 배경 이미지와 색상 블렌딩 */
+section ul {
+  list-style-type: disc;
+  text-align: left;
+  max-width: 800px;
+}
+
+section ul li {
+  margin-left: 20px;
+  color: #fff;
+}
+
+/* 자기소개 배경 */
+#introduction {
+  background: url("/img/scott-graham-OQMZwNd3ThU-unsplash.jpg") no-repeat center
+    center/cover;
+  background-color: rgba(0, 0, 0, 0.6); /* 반투명 배경 */
+  background-blend-mode: overlay;
+  color: white;
+  padding: 100px 0;
+}
+
+/* 경력 섹션 배경 */
+#main-works {
+  background: url("/img/kajetan-sumila-61FWNkexYVc-unsplash.jpg") no-repeat
+    center center/cover;
+  background-color: rgba(0, 0, 0, 0.6); /* 반투명 배경 */
+  background-blend-mode: overlay;
+  color: white;
+  padding: 100px 0;
+}
+
+/* 각 프로젝트 섹션 배경 */
 #section1 {
   background: url("/img/scott-graham-5fNmWej4tAA-unsplash.jpg") no-repeat center
     center/cover;
-  background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
-  background-blend-mode: overlay; /* 블렌딩 모드 */
+  background-color: rgba(0, 0, 0, 0.5);
+  background-blend-mode: overlay;
   color: white;
 }
 
 #section2 {
   background: url("/img/abhishek-kirloskar-ncqwTBV5qCA-unsplash.jpg") no-repeat
     center center/cover;
-  background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
-  background-blend-mode: overlay; /* 블렌딩 모드 */
+  background-color: rgba(0, 0, 0, 0.5);
+  background-blend-mode: overlay;
   color: white;
 }
 
 #section3 {
   background: url("/img/leif-christoph-gottwald-iM8dxccK1sY-unsplash.jpg")
     no-repeat center center/cover;
-  background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
-  background-blend-mode: overlay; /* 블렌딩 모드 */
+  background-color: rgba(0, 0, 0, 0.5);
+  background-blend-mode: overlay;
   color: white;
 }
 
@@ -70,11 +103,8 @@ footer {
   color: #333;
 }
 
+/* 반응형 디자인 */
 @media (max-width: 768px) {
-  section {
-    font-size: 1.5rem;
-  }
-
   section h2 {
     font-size: 1.8rem;
   }
@@ -83,7 +113,12 @@ footer {
     font-size: 1.5rem;
   }
 
-  section p {
+  section p,
+  section ul li {
     font-size: 1rem;
+  }
+
+  section ul {
+    padding-left: 20px;
   }
 }
