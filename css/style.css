@@ -1,84 +1,89 @@
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    font-family: 'Arial', sans-serif;
-    line-height: 1.6;
-    color: #333;
-    overflow-x: hidden;
+  font-family: "Arial", sans-serif;
+  line-height: 1.6;
+  color: #333;
+  overflow-x: hidden;
 }
 
 section {
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    color: white;
-    text-align: center;
-    font-size: 2rem;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: white;
+  text-align: center;
+  font-size: 2rem;
 }
 
 section h3 {
-    margin-bottom: 20px;
-    font-size: 2rem;
+  margin-bottom: 20px;
+  font-size: 2rem;
 }
 
 section h2 {
-    margin-bottom: 20px;
-    font-size: 3rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  margin-bottom: 20px;
+  font-size: 3rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 section p {
-    font-size: 1.2rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  font-size: 1.2rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
-
 
 /* 배경 이미지와 색상 블렌딩 */
 #section1 {
-    background: url('/img/scott-graham-5fNmWej4tAA-unsplash.jpg') no-repeat center center/cover;
-    background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
-    background-blend-mode: overlay; /* 블렌딩 모드 */
-    color: white;
+  background: url("/img/scott-graham-5fNmWej4tAA-unsplash.jpg") no-repeat center
+    center/cover;
+  background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
+  background-blend-mode: overlay; /* 블렌딩 모드 */
+  color: white;
 }
 
 #section2 {
-    background: url('/img/abhishek-kirloskar-ncqwTBV5qCA-unsplash.jpg') no-repeat center center/cover;
-    background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
-    background-blend-mode: overlay; /* 블렌딩 모드 */
-    color: white;
+  background: url("/img/abhishek-kirloskar-ncqwTBV5qCA-unsplash.jpg") no-repeat
+    center center/cover;
+  background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
+  background-blend-mode: overlay; /* 블렌딩 모드 */
+  color: white;
 }
 
 #section3 {
-    background: url('/img/leif-christoph-gottwald-iM8dxccK1sY-unsplash.jpg') no-repeat center center/cover;
-    background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
-    background-blend-mode: overlay; /* 블렌딩 모드 */
-    color: white;
+  background: url("/img/leif-christoph-gottwald-iM8dxccK1sY-unsplash.jpg")
+    no-repeat center center/cover;
+  background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
+  background-blend-mode: overlay; /* 블렌딩 모드 */
+  color: white;
 }
 
 footer {
-    padding: 20px;
-    text-align: center;
-    background: #f4f4f4;
-    color: #333;
+  padding: 20px;
+  text-align: center;
+  background: #f4f4f4;
+  color: #333;
 }
 
-
 @media (max-width: 768px) {
-    section {
-        font-size: 1.5rem;
-    }
+  section {
+    font-size: 1.5rem;
+  }
 
-    section h2 {
-        font-size: 2rem;
-    }
+  section h2 {
+    font-size: 1.8rem;
+  }
 
-    section p {
-        font-size: 1rem;
-    }
+  section h3 {
+    font-size: 1.5rem;
+  }
+
+  section p {
+    font-size: 1rem;
+  }
 }
