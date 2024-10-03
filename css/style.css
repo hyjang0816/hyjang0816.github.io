@@ -38,21 +38,21 @@ section p {
 
 /* 배경 이미지와 색상 블렌딩 */
 #section1 {
-    background: url('/myPortfolio/img/scott-graham-5fNmWej4tAA-unsplash.jpg') no-repeat center center/cover;
+    background: url('/img/scott-graham-5fNmWej4tAA-unsplash.jpg') no-repeat center center/cover;
     background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
     background-blend-mode: overlay; /* 블렌딩 모드 */
     color: white;
 }
 
 #section2 {
-    background: url('/myPortfolio/img/abhishek-kirloskar-ncqwTBV5qCA-unsplash.jpg') no-repeat center center/cover;
+    background: url('/img/abhishek-kirloskar-ncqwTBV5qCA-unsplash.jpg') no-repeat center center/cover;
     background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
     background-blend-mode: overlay; /* 블렌딩 모드 */
     color: white;
 }
 
 #section3 {
-    background: url('/myPortfolio/img/growtika-8zB4P0eafrs-unsplash.jpg') no-repeat center center/cover;
+    background: url('/img/growtika-8zB4P0eafrs-unsplash.jpg') no-repeat center center/cover;
     background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
     background-blend-mode: overlay; /* 블렌딩 모드 */
     color: white;
