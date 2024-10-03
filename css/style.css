@@ -52,19 +52,9 @@ section ul li {
 }
 
 /* 자기소개 배경 */
-#introduction {
+#introduction, #main-works {
   background: url("/img/scott-graham-OQMZwNd3ThU-unsplash.jpg") no-repeat center
     center/cover;
-  background-color: rgba(0, 0, 0, 0.6); /* 반투명 배경 */
-  background-blend-mode: overlay;
-  color: white;
-  padding: 100px 0;
-}
-
-/* 경력 섹션 배경 */
-#main-works {
-  background: url("/img/kajetan-sumila-61FWNkexYVc-unsplash.jpg") no-repeat
-    center center/cover;
   background-color: rgba(0, 0, 0, 0.6); /* 반투명 배경 */
   background-blend-mode: overlay;
   color: white;
