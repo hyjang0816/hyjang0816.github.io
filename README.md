@@ -9,7 +9,8 @@
 - [연락처](#연락처)
 
 ## 소개글
-이 포트폴리오는 제가 참여한 다양한 프로젝트를 통해 성장한 과정을 담고 있습니다. 주요 프로젝트들은 금융 및 공공 기관을 대상으로 한 시스템 개발이며, 그 외에도 다양한 기술을 활용하여 문제를 해결한 경험을 포함하고 있습니다.
+저는 Java와 Spring Framework를 사용하여 안정적이고 확장 가능한 시스템을 구축하는 데 중점을 두고 있습니다. 또한, 금융 및 공공 기관 시스템 개발 경험을 바탕으로 다양한 기술을 통해 문제를 해결하고 시스템 성능을 최적화한 경험이 있습니다.
+
 
 ## 기술 스택
 - **프로그래밍 언어**: Java, JavaScript, HTML, CSS
@@ -36,6 +37,6 @@
 
 ## 연락처
 - **Email**: hy015796@gmail.com
-- **GitHub**: [Repository](https://github.com/hyjang0816/myPortfolio.git)
-- **Link**: [Portfolio](https://hyjang0816.github.io/myPortfolio)
+- **GitHub**: [Repository](https://github.com/hyjang0816/hyjang0816.github.io)
+- **Link**: [Portfolio](https://hyjang0816.github.io/)
 ---

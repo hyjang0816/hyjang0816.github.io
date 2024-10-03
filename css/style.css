@@ -22,19 +22,22 @@ section {
     font-size: 2rem;
 }
 
-section h2 {
-    margin-bottom: 20px;
-    font-size: 3rem;
-}
-
 section h3 {
     margin-bottom: 20px;
     font-size: 2rem;
 }
 
+section h2 {
+    margin-bottom: 20px;
+    font-size: 3rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
 section p {
     font-size: 1.2rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
+
 
 /* 배경 이미지와 색상 블렌딩 */
 #section1 {
@@ -52,7 +55,7 @@ section p {
 }
 
 #section3 {
-    background: url('/img/growtika-8zB4P0eafrs-unsplash.jpg') no-repeat center center/cover;
+    background: url('/img/leif-christoph-gottwald-iM8dxccK1sY-unsplash.jpg') no-repeat center center/cover;
     background-color: rgba(0, 0, 0, 0.5); /* 어두운 반투명 배경 */
     background-blend-mode: overlay; /* 블렌딩 모드 */
     color: white;
@@ -63,4 +66,19 @@ footer {
     text-align: center;
     background: #f4f4f4;
     color: #333;
+}
+
+
+@media (max-width: 768px) {
+    section {
+        font-size: 1.5rem;
+    }
+
+    section h2 {
+        font-size: 2rem;
+    }
+
+    section p {
+        font-size: 1rem;
+    }
 }
