@@ -68,8 +68,11 @@
 ```text
 .
 ├── index.html    # 마크업/메타 태그/기본 레이아웃
-├── styles.css    # 반응형 UI 스타일
-├── script.js     # 상태 관리, 렌더링, 이벤트, 로컬 저장 로직
+├── assets
+│   ├── css
+│   │   └── styles.css    # 반응형 UI 스타일
+│   └── js
+│       └── script.js     # 상태 관리, 렌더링, 이벤트, 로컬 저장 로직
 └── README.md
 ```
 
