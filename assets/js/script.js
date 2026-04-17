@@ -392,12 +392,32 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function confirmTopAction(actionKey) {
+  const messages = {
+    clearCourtsBtn: "코트 배치를 모두 비울까요?",
+    resetAllBtn: "참석자, 코트, 참여 횟수를 전부 초기화할까요?",
+    completeGameBtn: "현재 배치를 게임 종료 처리하고 참여 횟수에 반영할까요?",
+  };
+  const message = messages[actionKey];
+  if (!message) return true;
+  return window.confirm(message);
+}
+
 document.getElementById("addParticipantsBtn").addEventListener("click", addParticipants);
 document.getElementById("addCourtBtn").addEventListener("click", addCourt);
 document.getElementById("recommendPlacementBtn").addEventListener("click", recommendPlacement);
-document.getElementById("completeGameBtn").addEventListener("click", completeCurrentGame);
-document.getElementById("clearCourtsBtn").addEventListener("click", clearCourts);
-document.getElementById("resetAllBtn").addEventListener("click", resetAll);
+document.getElementById("completeGameBtn").addEventListener("click", () => {
+  if (!confirmTopAction("completeGameBtn")) return;
+  completeCurrentGame();
+});
+document.getElementById("clearCourtsBtn").addEventListener("click", () => {
+  if (!confirmTopAction("clearCourtsBtn")) return;
+  clearCourts();
+});
+document.getElementById("resetAllBtn").addEventListener("click", () => {
+  if (!confirmTopAction("resetAllBtn")) return;
+  resetAll();
+});
 document.getElementById("playerInput").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) addParticipants();
 });
