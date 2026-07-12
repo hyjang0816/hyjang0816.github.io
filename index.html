@@ -40,7 +40,7 @@
     <div class="stats" id="stats"></div>
 
     <main class="main">
-      <section>
+      <section class="court-section">
         <div class="section-header">
           <div class="section-title">코트 편성</div>
           <div class="section-actions">
@@ -53,16 +53,15 @@
       </section>
 
       <aside class="side-panel">
-        <div class="card participant-input-card">
-          <div class="panel-header"><div class="section-title small-title">참석자 입력</div></div>
-          <div class="panel-body">
-            <label for="playerInput" class="field-label">이름 입력</label>
-            <div class="input-row">
-              <textarea id="playerInput" rows="3" placeholder="쉼표 또는 줄바꿈으로 여러 명 입력"></textarea>
-              <button class="btn" id="addParticipantsBtn">추가</button>
+        <div class="card participant-card">
+          <div class="panel-header participant-header">
+            <div>
+              <div class="section-title small-title">전체 참석자 목록</div>
+              <div class="helper">같은 사람도 여러 게임에 중복 배치할 수 있습니다. 이름 영역을 코트 자리로 끌어 놓으세요.</div>
             </div>
-            <div class="helper">동명이인은 별도 참가자로 등록할 수 있으며, 이름 옆 등급을 눌러 A~D로 변경할 수 있습니다.</div>
+            <input id="participantSearch" class="search-input" type="search" placeholder="이름 검색" autocomplete="off" />
           </div>
+          <div class="panel-body participant-scroll"><div class="participant-list" id="participantList"></div></div>
         </div>
 
         <div class="card placed-card">
@@ -75,15 +74,16 @@
           <div class="panel-body"><div class="placed-list" id="placedParticipantList"></div></div>
         </div>
 
-        <div class="card participant-card">
-          <div class="panel-header participant-header">
-            <div>
-              <div class="section-title small-title">전체 참석자 목록</div>
-              <div class="helper">같은 사람도 여러 게임에 중복 배치할 수 있습니다. 이름 영역을 코트 자리로 끌어 놓으세요.</div>
+        <div class="card participant-input-card">
+          <div class="panel-header"><div class="section-title small-title">참석자 입력</div></div>
+          <div class="panel-body">
+            <label for="playerInput" class="field-label">이름 입력</label>
+            <div class="input-row">
+              <textarea id="playerInput" rows="3" placeholder="쉼표 또는 줄바꿈으로 여러 명 입력"></textarea>
+              <button class="btn" id="addParticipantsBtn">추가</button>
             </div>
-            <input id="participantSearch" class="search-input" type="search" placeholder="이름 검색" autocomplete="off" />
+            <div class="helper">동명이인은 별도 참가자로 등록할 수 있으며, 이름 옆 등급을 눌러 A~D로 변경할 수 있습니다.</div>
           </div>
-          <div class="panel-body"><div class="participant-list" id="participantList"></div></div>
         </div>
       </aside>
     </main>
