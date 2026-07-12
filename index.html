@@ -67,8 +67,8 @@
         <div class="card placed-card">
           <div class="panel-header">
             <div>
-              <div class="section-title small-title">현재 배치 인원</div>
-              <div class="helper">현재 코트에 배치된 참가자만 표시됩니다.</div>
+              <div class="section-title small-title">미배치 인원 <span id="unassignedCount"></span></div>
+              <div class="helper">현재 쉬고 있는 참가자이며, 참여 횟수가 적은 순으로 표시됩니다.</div>
             </div>
           </div>
           <div class="panel-body"><div class="placed-list" id="placedParticipantList"></div></div>
@@ -96,5 +96,6 @@
 
   <script src="assets/js/script.js"></script>
   <script src="assets/js/allow-duplicate-placement.js"></script>
+  <script src="assets/js/unassigned-waitlist.js"></script>
 </body>
 </html>
