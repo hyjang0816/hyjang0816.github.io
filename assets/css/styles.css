@@ -82,6 +82,10 @@ textarea:focus, input:focus { border-color: #94a3b8; }
 .placed-chip-main { min-width: 0; }
 .placed-chip-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .placed-chip-location { color: var(--muted); font-size: 12px; margin-top: 3px; }
+.waitlist-chip { width: 100%; min-height: 54px; color: var(--text); text-align: left; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; transition: .15s ease; }
+.waitlist-chip:hover { background: #e8eef6; border-color: #cbd5e1; }
+.waitlist-chip.dragging { opacity: .45; cursor: grabbing; }
+#unassignedCount { color: var(--muted); font-size: 14px; font-weight: 600; }
 .empty-text { color: var(--muted); font-size: 14px; }
 .drag-ghost { position: fixed; left: 0; top: 0; z-index: 9999; pointer-events: none; display: none; padding: 10px 14px; border-radius: 14px; background: var(--accent); color: white; font-weight: 700; box-shadow: 0 10px 30px rgba(15, 23, 42, .28); transform: translate(-9999px, -9999px); }
 .drag-ghost.visible { display: block; }
