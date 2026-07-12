@@ -20,6 +20,7 @@
   <meta name="twitter:description" content="배드민턴 코트 배치, 참석자 관리, 참여 횟수 누적을 한 번에 처리하는 운영용 사이트입니다." />
   <meta name="twitter:image" content="https://cdn.pixabay.com/photo/2020/10/04/13/00/shuttlecocks-5626284_1280.jpg" />
   <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/touch-drag.css" />
 </head>
 <body>
   <div class="page">
@@ -57,7 +58,7 @@
           <div class="panel-header participant-header">
             <div>
               <div class="section-title small-title">전체 참석자 목록</div>
-              <div class="helper">같은 사람도 여러 게임에 중복 배치할 수 있습니다. 이름 영역을 코트 자리로 끌어 놓으세요.</div>
+              <div class="helper">PC는 이름 영역을 끌고, 태블릿·모바일은 오른쪽 점 아이콘을 길게 눌러 끌어 놓으세요.</div>
             </div>
             <input id="participantSearch" class="search-input" type="search" placeholder="이름 검색" autocomplete="off" />
           </div>
@@ -97,5 +98,6 @@
   <script src="assets/js/script.js"></script>
   <script src="assets/js/allow-duplicate-placement.js"></script>
   <script src="assets/js/unassigned-waitlist.js"></script>
+  <script src="assets/js/touch-longpress-drag.js"></script>
 </body>
 </html>
