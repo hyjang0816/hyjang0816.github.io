@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>배드민턴 운영용 사이트</title>
   <meta name="description" content="배드민턴 코트 배치, 참석자 관리, 참여 횟수 누적을 한 번에 처리하는 운영용 사이트입니다." />
   <meta name="theme-color" content="#0f172a" />
@@ -19,71 +19,74 @@
   <meta name="twitter:title" content="배드민턴 운영용 사이트" />
   <meta name="twitter:description" content="배드민턴 코트 배치, 참석자 관리, 참여 횟수 누적을 한 번에 처리하는 운영용 사이트입니다." />
   <meta name="twitter:image" content="https://cdn.pixabay.com/photo/2020/10/04/13/00/shuttlecocks-5626284_1280.jpg" />
-    <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 <body>
   <div class="page">
-    <div class="topbar">
+    <header class="topbar">
       <div>
         <h1>배드민턴 운영용 사이트</h1>
-        <div class="subtitle">라운드 없이 코트별 게임 기준으로 운영합니다. 코트를 편성한 뒤 게임 종료를 누르면 참여 횟수가 누적되고 코트가 비워집니다.</div>
+        <div class="subtitle">게임 횟수와 실력 등급을 고려해 코트를 공정하게 자동 편성합니다.</div>
       </div>
       <div class="actions">
+        <button class="btn" id="undoBtn" disabled>실행 취소</button>
         <button class="btn" id="clearCourtsBtn">코트 비우기</button>
-        <button class="btn" id="resetAllBtn">전체 초기화</button>
-        <button class="btn primary" id="completeGameBtn">게임 종료 + 참여횟수 반영</button>
+        <button class="btn danger-outline" id="resetAllBtn">전체 초기화</button>
+        <button class="btn primary" id="completeGameBtn">전체 게임 종료</button>
       </div>
-    </div>
+    </header>
 
-    <div class="save-message" id="saveMessage"></div>
-
+    <div class="save-message" id="saveMessage" aria-live="polite"></div>
     <div class="stats" id="stats"></div>
 
-    <div class="main">
-      <div>
+    <main class="main">
+      <section>
         <div class="section-header">
           <div class="section-title">코트 편성</div>
-          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <div class="section-actions">
             <div class="badge" id="activeSlotBadge">자리를 먼저 선택하세요</div>
-            <button class="btn" id="recommendPlacementBtn">자동 추천 배치</button>
+            <button class="btn primary-soft" id="recommendPlacementBtn">공정 자동 배치</button>
             <button class="btn" id="addCourtBtn">코트 추가</button>
           </div>
         </div>
         <div class="court-list" id="courtList"></div>
-      </div>
+      </section>
 
-      <div>
-        <div class="card" style="margin-bottom:14px;">
+      <aside class="side-panel">
+        <div class="card participant-input-card">
           <div class="panel-header">
-            <div>
-              <div class="section-title" style="font-size:20px;">참석자 입력</div>
-            </div>
+            <div class="section-title small-title">참석자 입력</div>
           </div>
           <div class="panel-body">
-            <label for="playerInput" style="display:block; font-size:14px; margin-bottom:8px;">이름 입력</label>
+            <label for="playerInput" class="field-label">이름 입력</label>
             <div class="input-row">
               <textarea id="playerInput" rows="3" placeholder="쉼표 또는 줄바꿈으로 여러 명 입력"></textarea>
               <button class="btn" id="addParticipantsBtn">추가</button>
             </div>
-            <div class="helper">새로고침해도 데이터가 브라우저에 저장됩니다. 참여 횟수는 게임 종료 버튼으로 자동 반영하거나, 목록에서 직접 조정할 수 있습니다.</div>
+            <div class="helper">동명이인은 별도 참가자로 등록할 수 있으며, 이름 옆 등급을 눌러 A~D로 변경할 수 있습니다.</div>
           </div>
         </div>
 
-        <div class="card">
-          <div class="panel-header">
+        <div class="card participant-card">
+          <div class="panel-header participant-header">
             <div>
-              <div class="section-title" style="font-size:20px;">참석자 목록</div>
-              <div class="helper">참여 횟수가 적은 순으로 자동 정렬되며, 자동 추천 배치 버튼으로 빈 자리를 빠르게 채울 수 있습니다.</div>
+              <div class="section-title small-title">참석자 목록</div>
+              <div class="helper">미배치 인원과 참여 횟수가 적은 인원을 우선 표시합니다.</div>
             </div>
+            <input id="participantSearch" class="search-input" type="search" placeholder="이름 검색" autocomplete="off" />
           </div>
           <div class="panel-body">
             <div class="participant-list" id="participantList"></div>
           </div>
         </div>
-      </div>
-    </div>
+      </aside>
+    </main>
   </div>
 
-    <script src="assets/js/script.js"></script>
+  <div class="mobile-bottom-bar">
+    <button class="btn primary mobile-complete" id="mobileCompleteGameBtn">전체 게임 종료</button>
+  </div>
+
+  <script src="assets/js/script.js"></script>
 </body>
 </html>
