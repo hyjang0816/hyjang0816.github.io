@@ -32,7 +32,7 @@
         <div class="section-header">
           <div class="section-title">코트 편성</div>
           <div class="section-actions">
-            <div class="badge" id="activeSlotBadge">자리를 먼저 선택하세요</div>
+            <div class="badge" id="activeSlotBadge">참석자를 끌거나 자리를 선택하세요</div>
             <button class="btn primary" id="recommendPlacementBtn">공정 자동 배치</button>
             <button class="btn" id="addCourtBtn">코트 추가</button>
           </div>
@@ -41,6 +41,16 @@
       </section>
 
       <aside>
+        <div class="card placed-card">
+          <div class="panel-header">
+            <div>
+              <div class="section-title small">현재 배치 인원</div>
+              <div class="helper">현재 코트에 들어간 참가자만 표시됩니다.</div>
+            </div>
+          </div>
+          <div class="panel-body"><div class="placed-list" id="placedParticipantList"></div></div>
+        </div>
+
         <div class="card input-card">
           <div class="panel-header"><div class="section-title small">참석자 입력</div></div>
           <div class="panel-body">
@@ -56,8 +66,8 @@
         <div class="card participant-card">
           <div class="panel-header participant-header">
             <div>
-              <div class="section-title small">참석자 목록</div>
-              <div class="helper">검색 후 이름을 눌러 선택한 코트 자리에 배치하세요.</div>
+              <div class="section-title small">전체 참석자</div>
+              <div class="helper">이름을 코트 자리로 끌어 놓거나, 자리를 선택한 뒤 이름을 누르세요.</div>
             </div>
             <input id="participantSearch" class="search-input" type="search" placeholder="이름 검색" />
           </div>
@@ -66,6 +76,8 @@
       </aside>
     </div>
   </div>
+
+  <div class="drag-ghost" id="dragGhost" aria-hidden="true"></div>
 
   <div class="mobile-bottom-bar">
     <button class="btn" id="mobileUndoBtn" disabled>↩ 취소</button>
