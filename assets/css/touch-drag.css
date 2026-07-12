@@ -1,0 +1,26 @@
+/* 터치 기기에서는 목록 전체가 아닌 드래그 핸들만 제스처를 가로챕니다. */
+@media (pointer: coarse) {
+  .participant-main,
+  .waitlist-chip {
+    touch-action: pan-y;
+    cursor: default;
+  }
+
+  .participant-main .drag-handle,
+  .waitlist-chip .drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    margin: -8px -8px -8px 0;
+    border-radius: 12px;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .participant-main .drag-handle:active,
+  .waitlist-chip .drag-handle:active {
+    background: rgba(15, 23, 42, 0.08);
+  }
+}
