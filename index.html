@@ -28,7 +28,7 @@
     <header class="topbar">
       <div>
         <h1>배드민턴 운영용 사이트</h1>
-        <div class="subtitle">게임 횟수와 1~10 가중치를 고려해 코트를 공정하게 자동 편성합니다.</div>
+        <div class="subtitle">게임 횟수를 우선하고, 비슷한 실력과 팀 균형을 고려해 자동 편성합니다.</div>
       </div>
       <div class="actions">
         <button class="btn" id="undoBtn" disabled>실행 취소</button>
@@ -84,7 +84,7 @@
               <textarea id="playerInput" rows="3" placeholder="쉼표 또는 줄바꿈으로 여러 명 입력"></textarea>
               <button class="btn" id="addParticipantsBtn">추가</button>
             </div>
-            <div class="helper">동명이인은 별도 참가자로 등록할 수 있으며, 가중치는 1~10 범위이고 기본값은 5입니다.</div>
+            <div class="helper">동명이인은 별도 참가자로 등록할 수 있으며, 실력은 1~10 범위이고 기본값은 5입니다.</div>
           </div>
         </div>
       </aside>
@@ -102,5 +102,6 @@
   <script src="assets/js/touch-longpress-drag.js"></script>
   <script src="assets/js/weight-system.js"></script>
   <script src="assets/js/weight-auto-button.js"></script>
+  <script src="assets/js/skill-matching.js"></script>
 </body>
 </html>
