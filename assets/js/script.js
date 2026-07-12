@@ -1,6 +1,7 @@
 const STORAGE_KEY = "badminton-ops-site-html-v2";
 const LEGACY_STORAGE_KEY = "badminton-ops-site-html-v1";
 const MAX_HISTORY = 10;
+const DRAG_THRESHOLD = 6;
 
 function uid() {
   if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -21,6 +22,7 @@ let selectedParticipantId = null;
 let history = [];
 let saveTimer = null;
 let searchKeyword = "";
+let pointerDrag = null;
 
 function migrateLegacy(legacy) {
   if (!legacy || !Array.isArray(legacy.participants)) return createInitialState();
@@ -57,7 +59,7 @@ function normalizeState(saved) {
       name: String(p.name || "").trim(),
       count: Math.max(0, Number(p.count || 0)),
       createdAt: p.createdAt || Date.now(),
-    })),
+    })).filter(p => p.name),
     lastPlayedIds: Array.isArray(saved.lastPlayedIds) ? saved.lastPlayedIds : [],
   };
 }
@@ -119,17 +121,26 @@ function getPlacedIds() {
 }
 
 function getSortedParticipants() {
-  const placed = new Set(getPlacedIds());
   const lastPlayed = new Set(data.lastPlayedIds || []);
   return data.participants
     .filter(p => p.name.toLowerCase().includes(searchKeyword.toLowerCase()))
-    .map(p => ({ ...p, isPlaced: placed.has(p.id), playedLast: lastPlayed.has(p.id) }))
+    .map(p => ({ ...p, playedLast: lastPlayed.has(p.id) }))
     .sort((a, b) => {
-      if (a.isPlaced !== b.isPlaced) return Number(a.isPlaced) - Number(b.isPlaced);
       if (a.playedLast !== b.playedLast) return Number(a.playedLast) - Number(b.playedLast);
       if (a.count !== b.count) return a.count - b.count;
       return a.createdAt - b.createdAt;
     });
+}
+
+function getPlacedParticipants() {
+  const result = [];
+  data.courts.forEach((court, courtIndex) => {
+    court.playerIds.forEach((id, slotIndex) => {
+      const participant = getParticipant(id);
+      if (participant) result.push({ participant, courtIndex, slotIndex });
+    });
+  });
+  return result;
 }
 
 function getSummary() {
@@ -150,10 +161,7 @@ function addParticipants() {
   const now = Date.now();
   persist({
     ...data,
-    participants: [
-      ...data.participants,
-      ...names.map((name, i) => ({ id: uid(), name, count: 0, createdAt: now + i })),
-    ],
+    participants: [...data.participants, ...names.map((name, i) => ({ id: uid(), name, count: 0, createdAt: now + i }))],
   }, { message: `${names.length}명 추가됨` });
   input.value = "";
 }
@@ -193,23 +201,34 @@ function removeCourt(courtId) {
 
 function selectSlot(courtId, slotIndex) {
   activeSlot = { courtId, slotIndex };
-  render();
+  renderActiveSlotBadge();
+  document.querySelectorAll(".slot").forEach(slot => slot.classList.toggle(
+    "active",
+    slot.dataset.courtId === courtId && Number(slot.dataset.slotIndex) === slotIndex,
+  ));
 }
 
-function assignParticipant(participantId) {
-  if (!activeSlot) return flashSaved("먼저 코트 자리를 선택하세요");
+function placeParticipant(participantId, courtId, slotIndex) {
+  const participant = getParticipant(participantId);
+  if (!participant) return;
   const cleared = data.courts.map(c => ({
     ...c,
     playerIds: c.playerIds.map(id => id === participantId ? "" : id),
   }));
   const courts = cleared.map(c => {
-    if (c.id !== activeSlot.courtId) return c;
+    if (c.id !== courtId) return c;
     const ids = [...c.playerIds];
-    ids[activeSlot.slotIndex] = participantId;
+    ids[slotIndex] = participantId;
     return { ...c, playerIds: ids };
   });
+  activeSlot = { courtId, slotIndex };
   selectedParticipantId = participantId;
-  persist({ ...data, courts }, { message: "참석자 배치됨" });
+  persist({ ...data, courts }, { message: `${participant.name} 배치됨` });
+}
+
+function assignParticipant(participantId) {
+  if (!activeSlot) return flashSaved("먼저 코트 자리를 선택하거나 이름을 끌어 놓으세요");
+  placeParticipant(participantId, activeSlot.courtId, activeSlot.slotIndex);
 }
 
 function removePlayerFromCourt(courtId, slotIndex) {
@@ -265,10 +284,7 @@ function completeCourtGame(courtId) {
 
 function clearCourts() {
   if (!window.confirm("코트 배치를 모두 비울까요?")) return;
-  persist({
-    ...data,
-    courts: data.courts.map(c => ({ ...c, playerIds: ["", "", "", ""] })),
-  }, { message: "코트 비워짐" });
+  persist({ ...data, courts: data.courts.map(c => ({ ...c, playerIds: ["", "", "", ""] })) }, { message: "코트 비워짐" });
 }
 
 function resetAll() {
@@ -280,11 +296,7 @@ function resetAll() {
 function renderStats() {
   const s = getSummary();
   document.getElementById("stats").innerHTML = [
-    ["코트", s.courts],
-    ["참석자", s.participants],
-    ["배치", s.assigned],
-    ["미배치", s.unassigned],
-    ["빈 자리", s.emptySlots],
+    ["코트", s.courts], ["참석자", s.participants], ["배치", s.assigned], ["미배치", s.unassigned], ["빈 자리", s.emptySlots],
   ].map(([label, value]) => `<div class="card stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div>`).join("");
 }
 
@@ -295,9 +307,9 @@ function renderCourts() {
     const slots = court.playerIds.map((id, slotIndex) => {
       const participant = getParticipant(id);
       const active = activeSlot && activeSlot.courtId === court.id && activeSlot.slotIndex === slotIndex;
-      return `<button class="slot ${active ? "active" : ""} ${participant ? "" : "empty"}" data-court-id="${court.id}" data-slot-index="${slotIndex}">
+      return `<button class="slot ${active ? "active" : ""} ${participant ? "" : "empty"}" data-court-id="${court.id}" data-slot-index="${slotIndex}" aria-label="코트 ${index + 1} ${slotIndex + 1}번 자리">
         <span class="${participant ? "slot-player" : ""}">${participant ? escapeHtml(participant.name) : "빈 자리"}</span>
-        ${participant ? `<span class="slot-remove" data-remove-court-id="${court.id}" data-remove-slot-index="${slotIndex}">✕</span>` : `<span class="slot-hint">선택</span>`}
+        ${participant ? `<span class="slot-remove" data-remove-court-id="${court.id}" data-remove-slot-index="${slotIndex}">✕</span>` : `<span class="slot-hint">드롭</span>`}
       </button>`;
     }).join("");
     return `<div class="card court-card">
@@ -309,19 +321,42 @@ function renderCourts() {
     </div>`;
   }).join("");
 
-  list.querySelectorAll("[data-court-id][data-slot-index]").forEach(btn => {
-    btn.addEventListener("click", e => {
-      if (!e.target.closest("[data-remove-court-id]")) selectSlot(btn.dataset.courtId, Number(btn.dataset.slotIndex));
+  list.querySelectorAll("[data-court-id][data-slot-index]").forEach(slot => {
+    slot.addEventListener("click", e => {
+      if (!e.target.closest("[data-remove-court-id]")) selectSlot(slot.dataset.courtId, Number(slot.dataset.slotIndex));
+    });
+    slot.addEventListener("dragover", e => {
+      e.preventDefault();
+      slot.classList.add("drag-over");
+    });
+    slot.addEventListener("dragleave", () => slot.classList.remove("drag-over"));
+    slot.addEventListener("drop", e => {
+      e.preventDefault();
+      slot.classList.remove("drag-over");
+      const participantId = e.dataTransfer.getData("text/participant-id");
+      if (participantId) placeParticipant(participantId, slot.dataset.courtId, Number(slot.dataset.slotIndex));
     });
   });
-  list.querySelectorAll("[data-remove-court-id]").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.stopPropagation();
-      removePlayerFromCourt(btn.dataset.removeCourtId, Number(btn.dataset.removeSlotIndex));
-    });
-  });
+  list.querySelectorAll("[data-remove-court-id]").forEach(btn => btn.addEventListener("click", e => {
+    e.stopPropagation();
+    removePlayerFromCourt(btn.dataset.removeCourtId, Number(btn.dataset.removeSlotIndex));
+  }));
   list.querySelectorAll("[data-delete-court-id]").forEach(btn => btn.addEventListener("click", () => removeCourt(btn.dataset.deleteCourtId)));
   list.querySelectorAll("[data-complete-court-id]").forEach(btn => btn.addEventListener("click", () => completeCourtGame(btn.dataset.completeCourtId)));
+}
+
+function renderPlacedParticipants() {
+  const list = document.getElementById("placedParticipantList");
+  const placed = getPlacedParticipants();
+  if (!placed.length) {
+    list.innerHTML = '<div class="empty-text">현재 배치된 참가자가 없습니다.</div>';
+    return;
+  }
+  list.innerHTML = placed.map(({ participant, courtIndex, slotIndex }) => `<div class="placed-chip">
+    <div class="placed-chip-main"><div class="placed-chip-name">${escapeHtml(participant.name)}</div><div class="placed-chip-location">코트 ${courtIndex + 1} · ${slotIndex + 1}번</div></div>
+    <button class="btn icon" data-unplace-court-id="${data.courts[courtIndex].id}" data-unplace-slot-index="${slotIndex}" aria-label="${escapeHtml(participant.name)} 배치 해제">✕</button>
+  </div>`).join("");
+  list.querySelectorAll("[data-unplace-court-id]").forEach(btn => btn.addEventListener("click", () => removePlayerFromCourt(btn.dataset.unplaceCourtId, Number(btn.dataset.unplaceSlotIndex))));
 }
 
 function renderParticipants() {
@@ -332,24 +367,109 @@ function renderParticipants() {
     return;
   }
   list.innerHTML = participants.map(p => `<div class="participant-item">
-    <button class="participant-main ${selectedParticipantId === p.id ? "selected" : ""} ${p.isPlaced ? "placed" : ""}" data-participant-id="${p.id}">
+    <button class="participant-main ${selectedParticipantId === p.id ? "selected" : ""}" data-participant-id="${p.id}" draggable="true">
       <div class="participant-meta"><div class="participant-count">참여 ${p.count}회${p.playedLast ? " · 직전 경기" : ""}</div><div class="participant-name">${escapeHtml(p.name)}</div></div>
-      ${p.isPlaced ? '<span class="placed-badge">배치됨</span>' : ''}
+      <span class="drag-handle" aria-hidden="true">⠿</span>
     </button>
     <button class="btn icon" data-count-id="${p.id}" data-delta="-1">−</button>
     <button class="btn icon" data-count-id="${p.id}" data-delta="1">＋</button>
     <button class="btn icon" data-remove-id="${p.id}">✕</button>
   </div>`).join("");
 
-  list.querySelectorAll("[data-participant-id]").forEach(btn => btn.addEventListener("click", () => assignParticipant(btn.dataset.participantId)));
+  list.querySelectorAll("[data-participant-id]").forEach(btn => {
+    btn.addEventListener("click", () => assignParticipant(btn.dataset.participantId));
+    btn.addEventListener("dragstart", e => {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/participant-id", btn.dataset.participantId);
+      btn.classList.add("dragging");
+    });
+    btn.addEventListener("dragend", () => {
+      btn.classList.remove("dragging");
+      clearDropHighlights();
+    });
+    btn.addEventListener("pointerdown", startPointerDrag);
+  });
   list.querySelectorAll("[data-count-id]").forEach(btn => btn.addEventListener("click", () => changeCount(btn.dataset.countId, Number(btn.dataset.delta))));
   list.querySelectorAll("[data-remove-id]").forEach(btn => btn.addEventListener("click", () => removeParticipant(btn.dataset.removeId)));
+}
+
+function startPointerDrag(e) {
+  if (e.pointerType === "mouse") return;
+  const source = e.currentTarget;
+  pointerDrag = {
+    pointerId: e.pointerId,
+    participantId: source.dataset.participantId,
+    source,
+    startX: e.clientX,
+    startY: e.clientY,
+    active: false,
+  };
+  source.setPointerCapture?.(e.pointerId);
+  source.addEventListener("pointermove", movePointerDrag);
+  source.addEventListener("pointerup", endPointerDrag);
+  source.addEventListener("pointercancel", endPointerDrag);
+}
+
+function movePointerDrag(e) {
+  if (!pointerDrag || e.pointerId !== pointerDrag.pointerId) return;
+  const distance = Math.hypot(e.clientX - pointerDrag.startX, e.clientY - pointerDrag.startY);
+  if (!pointerDrag.active && distance < DRAG_THRESHOLD) return;
+  if (!pointerDrag.active) {
+    pointerDrag.active = true;
+    pointerDrag.source.classList.add("dragging");
+    const participant = getParticipant(pointerDrag.participantId);
+    const ghost = document.getElementById("dragGhost");
+    ghost.textContent = participant?.name || "참석자";
+    ghost.classList.add("visible");
+  }
+  e.preventDefault();
+  moveGhost(e.clientX, e.clientY);
+  highlightDropTarget(e.clientX, e.clientY);
+}
+
+function endPointerDrag(e) {
+  if (!pointerDrag || e.pointerId !== pointerDrag.pointerId) return;
+  const { source, participantId, active } = pointerDrag;
+  source.releasePointerCapture?.(e.pointerId);
+  source.removeEventListener("pointermove", movePointerDrag);
+  source.removeEventListener("pointerup", endPointerDrag);
+  source.removeEventListener("pointercancel", endPointerDrag);
+  source.classList.remove("dragging");
+  document.getElementById("dragGhost").classList.remove("visible");
+  const target = active ? getSlotAtPoint(e.clientX, e.clientY) : null;
+  clearDropHighlights();
+  pointerDrag = null;
+  if (target) {
+    placeParticipant(participantId, target.dataset.courtId, Number(target.dataset.slotIndex));
+  }
+}
+
+function moveGhost(x, y) {
+  const ghost = document.getElementById("dragGhost");
+  ghost.style.transform = `translate(${x + 12}px, ${y + 12}px)`;
+}
+
+function getSlotAtPoint(x, y) {
+  const elements = document.elementsFromPoint(x, y);
+  return elements.map(el => el.closest?.(".slot")).find(Boolean) || null;
+}
+
+function highlightDropTarget(x, y) {
+  const target = getSlotAtPoint(x, y);
+  document.querySelectorAll(".slot.drag-over").forEach(slot => {
+    if (slot !== target) slot.classList.remove("drag-over");
+  });
+  target?.classList.add("drag-over");
+}
+
+function clearDropHighlights() {
+  document.querySelectorAll(".slot.drag-over").forEach(slot => slot.classList.remove("drag-over"));
 }
 
 function renderActiveSlotBadge() {
   const badge = document.getElementById("activeSlotBadge");
   if (!activeSlot) {
-    badge.textContent = "자리를 먼저 선택하세요";
+    badge.textContent = "참석자를 끌거나 자리를 선택하세요";
     return;
   }
   const index = data.courts.findIndex(c => c.id === activeSlot.courtId);
@@ -359,6 +479,7 @@ function renderActiveSlotBadge() {
 function render() {
   renderStats();
   renderCourts();
+  renderPlacedParticipants();
   renderParticipants();
   renderActiveSlotBadge();
   const disabled = history.length === 0;
