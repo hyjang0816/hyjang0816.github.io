@@ -1,4 +1,6 @@
-const STORAGE_KEY = "badminton-ops-site-html-v1";
+const STORAGE_KEY = "badminton-ops-site-html-v2";
+const LEGACY_STORAGE_KEY = "badminton-ops-site-html-v1";
+const MAX_HISTORY = 10;
 
 function uid() {
   if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -6,126 +8,187 @@ function uid() {
 }
 
 function createCourt() {
-  return { id: uid(), players: ["", "", "", ""] };
+  return { id: uid(), playerIds: ["", "", "", ""] };
 }
 
 function createInitialState() {
-  return {
-    courts: [createCourt()],
-    participants: [],
-    participationCounts: {},
-  };
+  return { courts: [createCourt()], participants: [], lastPlayedIds: [] };
 }
 
 let data = loadData();
 let activeSlot = null;
-let selectedParticipant = null;
+let selectedParticipantId = null;
+let history = [];
 let saveTimer = null;
+let searchKeyword = "";
+
+function migrateLegacy(legacy) {
+  if (!legacy || !Array.isArray(legacy.participants)) return createInitialState();
+  const participants = legacy.participants.map(name => ({
+    id: uid(),
+    name: String(name || "").trim(),
+    count: Number(legacy.participationCounts?.[name] || 0),
+    createdAt: Date.now() + Math.random(),
+  })).filter(p => p.name);
+  const used = new Set();
+  const courts = (legacy.courts || []).map(court => ({
+    id: court.id || uid(),
+    playerIds: (court.players || ["", "", "", ""]).map(name => {
+      if (!name) return "";
+      const participant = participants.find(p => p.name === name && !used.has(p.id));
+      if (!participant) return "";
+      used.add(participant.id);
+      return participant.id;
+    }),
+  }));
+  return { courts: courts.length ? courts : [createCourt()], participants, lastPlayedIds: [] };
+}
+
+function normalizeState(saved) {
+  if (!saved || !Array.isArray(saved.participants)) return createInitialState();
+  if (saved.participants.length && typeof saved.participants[0] === "string") return migrateLegacy(saved);
+  return {
+    courts: Array.isArray(saved.courts) && saved.courts.length ? saved.courts.map(c => ({
+      id: c.id || uid(),
+      playerIds: Array.isArray(c.playerIds) ? [...c.playerIds].slice(0, 4).concat(["", "", "", ""]).slice(0, 4) : ["", "", "", ""],
+    })) : [createCourt()],
+    participants: saved.participants.map(p => ({
+      id: p.id || uid(),
+      name: String(p.name || "").trim(),
+      count: Math.max(0, Number(p.count || 0)),
+      createdAt: p.createdAt || Date.now(),
+    })),
+    lastPlayedIds: Array.isArray(saved.lastPlayedIds) ? saved.lastPlayedIds : [],
+  };
+}
 
 function loadData() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch (e) {}
+    if (saved) return normalizeState(JSON.parse(saved));
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy) {
+      const migrated = migrateLegacy(JSON.parse(legacy));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+      return migrated;
+    }
+  } catch (e) {
+    console.warn("저장 데이터 로드 실패", e);
+  }
   return createInitialState();
 }
 
-function persist(next) {
+function cloneState(state) {
+  return JSON.parse(JSON.stringify(state));
+}
+
+function persist(next, { recordHistory = true, message = "저장됨" } = {}) {
+  if (recordHistory) {
+    history.push(cloneState(data));
+    if (history.length > MAX_HISTORY) history.shift();
+  }
   data = next;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  flashSaved();
+  flashSaved(message);
   render();
 }
 
-function flashSaved() {
-  const el = document.getElementById("saveMessage");
-  el.textContent = "저장됨";
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    el.textContent = "";
-  }, 1000);
+function undo() {
+  if (!history.length) return;
+  data = history.pop();
+  activeSlot = null;
+  selectedParticipantId = null;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  flashSaved("이전 상태로 복원됨");
+  render();
 }
 
-function getPlacedPlayers() {
-  return data.courts.flatMap(court => court.players).filter(Boolean);
+function flashSaved(message) {
+  const el = document.getElementById("saveMessage");
+  el.textContent = message;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { el.textContent = ""; }, 1400);
+}
+
+function getParticipant(id) {
+  return data.participants.find(p => p.id === id);
+}
+
+function getPlacedIds() {
+  return data.courts.flatMap(c => c.playerIds).filter(Boolean);
 }
 
 function getSortedParticipants() {
-  const placedSet = new Set(getPlacedPlayers());
+  const placed = new Set(getPlacedIds());
+  const lastPlayed = new Set(data.lastPlayedIds || []);
   return data.participants
-    .map((name, index) => ({
-      name,
-      index,
-      key: `${name}__${index}`,
-      count: data.participationCounts?.[name] || 0,
-      isPlaced: placedSet.has(name),
-    }))
+    .filter(p => p.name.toLowerCase().includes(searchKeyword.toLowerCase()))
+    .map(p => ({ ...p, isPlaced: placed.has(p.id), playedLast: lastPlayed.has(p.id) }))
     .sort((a, b) => {
-      if (a.count !== b.count) return a.count - b.count;
       if (a.isPlaced !== b.isPlaced) return Number(a.isPlaced) - Number(b.isPlaced);
-      return a.index - b.index;
+      if (a.playedLast !== b.playedLast) return Number(a.playedLast) - Number(b.playedLast);
+      if (a.count !== b.count) return a.count - b.count;
+      return a.createdAt - b.createdAt;
     });
 }
 
 function getSummary() {
-  const placedPlayers = getPlacedPlayers();
-  const courts = data.courts.length;
-  const participants = data.participants.length;
-  const assigned = placedPlayers.length;
-  const unassigned = Math.max(participants - assigned, 0);
-  const emptySlots = data.courts.reduce((sum, court) => sum + court.players.filter(p => !p).length, 0);
-  return { courts, participants, assigned, unassigned, emptySlots };
+  const assigned = getPlacedIds().length;
+  return {
+    courts: data.courts.length,
+    participants: data.participants.length,
+    assigned,
+    unassigned: Math.max(data.participants.length - assigned, 0),
+    emptySlots: data.courts.reduce((sum, c) => sum + c.playerIds.filter(id => !id).length, 0),
+  };
 }
 
 function addParticipants() {
   const input = document.getElementById("playerInput");
-  const names = input.value
-    .split(/\n|,/)
-    .map(name => name.trim())
-    .filter(Boolean);
+  const names = input.value.split(/\n|,/).map(v => v.trim()).filter(Boolean);
   if (!names.length) return;
+  const now = Date.now();
   persist({
     ...data,
-    participants: [...data.participants, ...names],
-  });
+    participants: [
+      ...data.participants,
+      ...names.map((name, i) => ({ id: uid(), name, count: 0, createdAt: now + i })),
+    ],
+  }, { message: `${names.length}명 추가됨` });
   input.value = "";
 }
 
 function addCourt() {
-  persist({
-    ...data,
-    courts: [...data.courts, createCourt()],
-  });
+  persist({ ...data, courts: [...data.courts, createCourt()] }, { message: "코트 추가됨" });
 }
 
 function recommendPlacement() {
-  const candidates = getSortedParticipants().filter(participant => !participant.isPlaced);
-  if (!candidates.length) return;
-
-  let candidateIndex = 0;
-  const nextCourts = data.courts.map(court => {
-    const nextPlayers = [...court.players];
-    for (let i = 0; i < nextPlayers.length; i += 1) {
-      if (nextPlayers[i]) continue;
-      if (candidateIndex >= candidates.length) break;
-      nextPlayers[i] = candidates[candidateIndex].name;
-      candidateIndex += 1;
-    }
-    return { ...court, players: nextPlayers };
-  });
-
+  const placed = new Set(getPlacedIds());
+  const lastPlayed = new Set(data.lastPlayedIds || []);
+  const candidates = data.participants
+    .filter(p => !placed.has(p.id))
+    .sort((a, b) => {
+      const aLast = lastPlayed.has(a.id) ? 1 : 0;
+      const bLast = lastPlayed.has(b.id) ? 1 : 0;
+      if (aLast !== bLast) return aLast - bLast;
+      if (a.count !== b.count) return a.count - b.count;
+      return Math.random() - 0.5;
+    });
+  if (!candidates.length) return flashSaved("배치할 참석자가 없습니다");
+  let index = 0;
+  const courts = data.courts.map(court => ({
+    ...court,
+    playerIds: court.playerIds.map(id => id || (candidates[index] ? candidates[index++].id : "")),
+  }));
   activeSlot = null;
-  selectedParticipant = null;
-  persist({
-    ...data,
-    courts: nextCourts,
-  });
+  selectedParticipantId = null;
+  persist({ ...data, courts }, { message: "공정 자동 배치 완료" });
 }
 
 function removeCourt(courtId) {
-  const nextCourts = data.courts.length === 1 ? data.courts : data.courts.filter(c => c.id !== courtId);
-  if (activeSlot && activeSlot.courtId === courtId) activeSlot = null;
-  persist({ ...data, courts: nextCourts });
+  if (data.courts.length === 1) return flashSaved("코트는 최소 1개 필요합니다");
+  if (!window.confirm("이 코트를 삭제할까요? 배치된 인원은 미배치 상태가 됩니다.")) return;
+  persist({ ...data, courts: data.courts.filter(c => c.id !== courtId) }, { message: "코트 삭제됨" });
 }
 
 function selectSlot(courtId, slotIndex) {
@@ -133,237 +196,154 @@ function selectSlot(courtId, slotIndex) {
   render();
 }
 
-function assignParticipant(name, key) {
-  if (!activeSlot) return;
-
-  const clearedCourts = data.courts.map(court => ({
-    ...court,
-    players: court.players.map(p => p === name ? "" : p),
+function assignParticipant(participantId) {
+  if (!activeSlot) return flashSaved("먼저 코트 자리를 선택하세요");
+  const cleared = data.courts.map(c => ({
+    ...c,
+    playerIds: c.playerIds.map(id => id === participantId ? "" : id),
   }));
-
-  const nextCourts = clearedCourts.map(court => {
-    if (court.id !== activeSlot.courtId) return court;
-    const nextPlayers = [...court.players];
-    nextPlayers[activeSlot.slotIndex] = name;
-    return { ...court, players: nextPlayers };
+  const courts = cleared.map(c => {
+    if (c.id !== activeSlot.courtId) return c;
+    const ids = [...c.playerIds];
+    ids[activeSlot.slotIndex] = participantId;
+    return { ...c, playerIds: ids };
   });
-
-  selectedParticipant = key;
-  persist({ ...data, courts: nextCourts });
+  selectedParticipantId = participantId;
+  persist({ ...data, courts }, { message: "참석자 배치됨" });
 }
 
 function removePlayerFromCourt(courtId, slotIndex) {
   persist({
     ...data,
-    courts: data.courts.map(court => {
-      if (court.id !== courtId) return court;
-      const nextPlayers = [...court.players];
-      nextPlayers[slotIndex] = "";
-      return { ...court, players: nextPlayers };
-    })
-  });
+    courts: data.courts.map(c => {
+      if (c.id !== courtId) return c;
+      const ids = [...c.playerIds];
+      ids[slotIndex] = "";
+      return { ...c, playerIds: ids };
+    }),
+  }, { message: "배치 해제됨" });
 }
 
-function removeParticipant(targetName, targetIndex) {
+function removeParticipant(id) {
+  const participant = getParticipant(id);
+  if (!participant || !window.confirm(`${participant.name} 참석자를 삭제할까요?`)) return;
   persist({
     ...data,
-    participants: data.participants.filter((name, index) => !(name === targetName && index === targetIndex)),
-    courts: data.courts.map(court => ({
-      ...court,
-      players: court.players.map(p => p === targetName ? "" : p),
-    }))
-  });
+    participants: data.participants.filter(p => p.id !== id),
+    courts: data.courts.map(c => ({ ...c, playerIds: c.playerIds.map(x => x === id ? "" : x) })),
+    lastPlayedIds: data.lastPlayedIds.filter(x => x !== id),
+  }, { message: "참석자 삭제됨" });
 }
 
-function increaseCount(name) {
+function changeCount(id, delta) {
   persist({
     ...data,
-    participationCounts: {
-      ...data.participationCounts,
-      [name]: (data.participationCounts?.[name] || 0) + 1,
-    }
-  });
+    participants: data.participants.map(p => p.id === id ? { ...p, count: Math.max(0, p.count + delta) } : p),
+  }, { message: "참여 횟수 변경됨" });
 }
 
-function decreaseCount(name) {
-  const current = data.participationCounts?.[name] || 0;
-  persist({
-    ...data,
-    participationCounts: {
-      ...data.participationCounts,
-      [name]: Math.max(current - 1, 0),
-    }
-  });
+function completeGame(ids, courtId = null) {
+  const uniqueIds = [...new Set(ids.filter(Boolean))];
+  if (!uniqueIds.length) return flashSaved("게임 인원이 없습니다");
+  const participants = data.participants.map(p => uniqueIds.includes(p.id) ? { ...p, count: p.count + 1 } : p);
+  const courts = data.courts.map(c => (!courtId || c.id === courtId) ? { ...c, playerIds: ["", "", "", ""] } : c);
+  activeSlot = null;
+  selectedParticipantId = null;
+  persist({ ...data, participants, courts, lastPlayedIds: uniqueIds }, { message: `${uniqueIds.length}명 참여 횟수 반영됨` });
 }
 
 function completeCurrentGame() {
-  const uniquePlayed = Array.from(new Set(getPlacedPlayers()));
-  const nextCounts = { ...(data.participationCounts || {}) };
-  uniquePlayed.forEach(name => {
-    nextCounts[name] = (nextCounts[name] || 0) + 1;
-  });
-
-  activeSlot = null;
-  selectedParticipant = null;
-  persist({
-    ...data,
-    participationCounts: nextCounts,
-    courts: data.courts.map(court => ({ ...court, players: ["", "", "", ""] }))
-  });
+  if (!window.confirm("현재 전체 코트를 게임 종료 처리할까요?")) return;
+  completeGame(getPlacedIds());
 }
 
 function completeCourtGame(courtId) {
-  const targetCourt = data.courts.find(court => court.id === courtId);
-  if (!targetCourt) return;
-
-  const uniquePlayed = Array.from(new Set(targetCourt.players.filter(Boolean)));
-  if (!uniquePlayed.length) return;
-
-  const nextCounts = { ...(data.participationCounts || {}) };
-  uniquePlayed.forEach(name => {
-    nextCounts[name] = (nextCounts[name] || 0) + 1;
-  });
-
-  if (activeSlot && activeSlot.courtId === courtId) activeSlot = null;
-  selectedParticipant = null;
-
-  persist({
-    ...data,
-    participationCounts: nextCounts,
-    courts: data.courts.map(court =>
-      court.id === courtId ? { ...court, players: ["", "", "", ""] } : court
-    )
-  });
+  const court = data.courts.find(c => c.id === courtId);
+  if (!court || !window.confirm("이 코트를 게임 종료 처리할까요?")) return;
+  completeGame(court.playerIds, courtId);
 }
 
 function clearCourts() {
-  activeSlot = null;
-  selectedParticipant = null;
+  if (!window.confirm("코트 배치를 모두 비울까요?")) return;
   persist({
     ...data,
-    courts: data.courts.map(court => ({ ...court, players: ["", "", "", ""] }))
-  });
+    courts: data.courts.map(c => ({ ...c, playerIds: ["", "", "", ""] })),
+  }, { message: "코트 비워짐" });
 }
 
 function resetAll() {
-  data = createInitialState();
-  activeSlot = null;
-  selectedParticipant = null;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  if (!window.confirm("참석자, 코트, 참여 횟수를 전부 초기화할까요? 실행 취소로 복구할 수 있습니다.")) return;
+  persist(createInitialState(), { message: "전체 초기화됨" });
   document.getElementById("playerInput").value = "";
-  flashSaved();
-  render();
 }
 
 function renderStats() {
-  const stats = getSummary();
-  const container = document.getElementById("stats");
-  const items = [
-    ["코트 수", stats.courts],
-    ["참석자", stats.participants],
-    ["배치 완료", stats.assigned],
-    ["미배치", stats.unassigned],
-    ["빈 자리", stats.emptySlots],
-  ];
-
-  container.innerHTML = items.map(([label, value]) => `
-    <div class="card stat-card">
-      <div class="stat-label">${label}</div>
-      <div class="stat-value">${value}</div>
-    </div>
-  `).join("");
+  const s = getSummary();
+  document.getElementById("stats").innerHTML = [
+    ["코트", s.courts],
+    ["참석자", s.participants],
+    ["배치", s.assigned],
+    ["미배치", s.unassigned],
+    ["빈 자리", s.emptySlots],
+  ].map(([label, value]) => `<div class="card stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div></div>`).join("");
 }
 
 function renderCourts() {
   const list = document.getElementById("courtList");
   list.innerHTML = data.courts.map((court, index) => {
-    const filled = court.players.filter(Boolean).length;
-    const slots = court.players.map((player, slotIndex) => {
-      const isActive = activeSlot && activeSlot.courtId === court.id && activeSlot.slotIndex === slotIndex;
-      return `
-        <button class="slot ${isActive ? "active" : ""} ${player ? "" : "empty"}" data-court-id="${court.id}" data-slot-index="${slotIndex}">
-          <span class="${player ? "slot-player" : ""}">${player || "빈 자리"}</span>
-          ${player ? `<span class="slot-remove" data-remove-court-id="${court.id}" data-remove-slot-index="${slotIndex}">✕</span>` : `<span style="font-size:12px;color:#cbd5e1;">선택</span>`}
-        </button>
-      `;
+    const filled = court.playerIds.filter(Boolean).length;
+    const slots = court.playerIds.map((id, slotIndex) => {
+      const participant = getParticipant(id);
+      const active = activeSlot && activeSlot.courtId === court.id && activeSlot.slotIndex === slotIndex;
+      return `<button class="slot ${active ? "active" : ""} ${participant ? "" : "empty"}" data-court-id="${court.id}" data-slot-index="${slotIndex}">
+        <span class="${participant ? "slot-player" : ""}">${participant ? escapeHtml(participant.name) : "빈 자리"}</span>
+        ${participant ? `<span class="slot-remove" data-remove-court-id="${court.id}" data-remove-slot-index="${slotIndex}">✕</span>` : `<span class="slot-hint">선택</span>`}
+      </button>`;
     }).join("");
-
-    return `
-      <div class="card">
-        <div class="court-card-header">
-          <div>
-            <div class="section-title" style="font-size:20px;">코트 ${index + 1}</div>
-            <div class="court-subtitle">복식 · 최대 4명</div>
-          </div>
-          <div style="display:flex; gap:10px; align-items:center;">
-            <div class="badge">${filled}/4</div>
-            <button class="btn success" data-complete-court-id="${court.id}">게임 종료</button>
-            <button class="btn" data-delete-court-id="${court.id}">삭제</button>
-          </div>
-        </div>
-        <div class="court-card-body">
-          <div class="court-grid">${slots}</div>
-        </div>
+    return `<div class="card court-card">
+      <div class="court-card-header">
+        <div><div class="section-title small">코트 ${index + 1}</div><div class="court-subtitle">복식 · 최대 4명</div></div>
+        <div class="court-actions"><div class="badge">${filled}/4</div><button class="btn success" data-complete-court-id="${court.id}">게임 종료</button><button class="btn" data-delete-court-id="${court.id}">삭제</button></div>
       </div>
-    `;
+      <div class="court-card-body"><div class="court-grid">${slots}</div></div>
+    </div>`;
   }).join("");
 
   list.querySelectorAll("[data-court-id][data-slot-index]").forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      if (e.target.closest("[data-remove-court-id]")) return;
-      selectSlot(btn.dataset.courtId, Number(btn.dataset.slotIndex));
+    btn.addEventListener("click", e => {
+      if (!e.target.closest("[data-remove-court-id]")) selectSlot(btn.dataset.courtId, Number(btn.dataset.slotIndex));
     });
   });
-
   list.querySelectorAll("[data-remove-court-id]").forEach(btn => {
-    btn.addEventListener("click", (e) => {
+    btn.addEventListener("click", e => {
       e.stopPropagation();
       removePlayerFromCourt(btn.dataset.removeCourtId, Number(btn.dataset.removeSlotIndex));
     });
   });
-
-  list.querySelectorAll("[data-delete-court-id]").forEach(btn => {
-    btn.addEventListener("click", () => removeCourt(btn.dataset.deleteCourtId));
-  });
-  list.querySelectorAll("[data-complete-court-id]").forEach(btn => {
-    btn.addEventListener("click", () => completeCourtGame(btn.dataset.completeCourtId));
-  });
+  list.querySelectorAll("[data-delete-court-id]").forEach(btn => btn.addEventListener("click", () => removeCourt(btn.dataset.deleteCourtId)));
+  list.querySelectorAll("[data-complete-court-id]").forEach(btn => btn.addEventListener("click", () => completeCourtGame(btn.dataset.completeCourtId)));
 }
 
 function renderParticipants() {
   const list = document.getElementById("participantList");
-  if (!data.participants.length) {
-    list.innerHTML = '<div class="empty-text">참석자 이름을 먼저 입력해 주세요.</div>';
+  const participants = getSortedParticipants();
+  if (!participants.length) {
+    list.innerHTML = `<div class="empty-text">${searchKeyword ? "검색 결과가 없습니다." : "참석자를 먼저 입력해 주세요."}</div>`;
     return;
   }
+  list.innerHTML = participants.map(p => `<div class="participant-item">
+    <button class="participant-main ${selectedParticipantId === p.id ? "selected" : ""} ${p.isPlaced ? "placed" : ""}" data-participant-id="${p.id}">
+      <div class="participant-meta"><div class="participant-count">참여 ${p.count}회${p.playedLast ? " · 직전 경기" : ""}</div><div class="participant-name">${escapeHtml(p.name)}</div></div>
+      ${p.isPlaced ? '<span class="placed-badge">배치됨</span>' : ''}
+    </button>
+    <button class="btn icon" data-count-id="${p.id}" data-delta="-1">−</button>
+    <button class="btn icon" data-count-id="${p.id}" data-delta="1">＋</button>
+    <button class="btn icon" data-remove-id="${p.id}">✕</button>
+  </div>`).join("");
 
-  list.innerHTML = getSortedParticipants().map(({ name, index, key, isPlaced, count }) => `
-    <div class="participant-item">
-      <button class="participant-main ${selectedParticipant === key ? "selected" : ""} ${isPlaced ? "placed" : ""}" data-participant-name="${escapeHtml(name)}" data-participant-key="${escapeHtml(key)}">
-        <div class="participant-meta">
-          <div class="participant-count">참여 ${count}회</div>
-          <div class="participant-name">${escapeHtml(name)}</div>
-        </div>
-        ${isPlaced ? '<span class="placed-badge">배치됨</span>' : ''}
-      </button>
-      <button class="btn icon" data-decrease-name="${escapeHtml(name)}">−</button>
-      <button class="btn icon" data-increase-name="${escapeHtml(name)}">＋</button>
-      <button class="btn icon" data-remove-name="${escapeHtml(name)}" data-remove-index="${index}">✕</button>
-    </div>
-  `).join("");
-
-  list.querySelectorAll("[data-participant-name]").forEach(btn => {
-    btn.addEventListener("click", () => assignParticipant(btn.dataset.participantName, btn.dataset.participantKey));
-  });
-  list.querySelectorAll("[data-decrease-name]").forEach(btn => {
-    btn.addEventListener("click", () => decreaseCount(btn.dataset.decreaseName));
-  });
-  list.querySelectorAll("[data-increase-name]").forEach(btn => {
-    btn.addEventListener("click", () => increaseCount(btn.dataset.increaseName));
-  });
-  list.querySelectorAll("[data-remove-name]").forEach(btn => {
-    btn.addEventListener("click", () => removeParticipant(btn.dataset.removeName, Number(btn.dataset.removeIndex)));
-  });
+  list.querySelectorAll("[data-participant-id]").forEach(btn => btn.addEventListener("click", () => assignParticipant(btn.dataset.participantId)));
+  list.querySelectorAll("[data-count-id]").forEach(btn => btn.addEventListener("click", () => changeCount(btn.dataset.countId, Number(btn.dataset.delta))));
+  list.querySelectorAll("[data-remove-id]").forEach(btn => btn.addEventListener("click", () => removeParticipant(btn.dataset.removeId)));
 }
 
 function renderActiveSlotBadge() {
@@ -372,8 +352,8 @@ function renderActiveSlotBadge() {
     badge.textContent = "자리를 먼저 선택하세요";
     return;
   }
-  const courtIndex = data.courts.findIndex(c => c.id === activeSlot.courtId);
-  badge.textContent = `선택된 자리: 코트 ${courtIndex + 1} / ${activeSlot.slotIndex + 1}번`;
+  const index = data.courts.findIndex(c => c.id === activeSlot.courtId);
+  badge.textContent = `코트 ${index + 1} · ${activeSlot.slotIndex + 1}번 선택됨`;
 }
 
 function render() {
@@ -381,6 +361,9 @@ function render() {
   renderCourts();
   renderParticipants();
   renderActiveSlotBadge();
+  const disabled = history.length === 0;
+  document.getElementById("undoBtn").disabled = disabled;
+  document.getElementById("mobileUndoBtn").disabled = disabled;
 }
 
 function escapeHtml(value) {
@@ -392,33 +375,20 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function confirmTopAction(actionKey) {
-  const messages = {
-    clearCourtsBtn: "코트 배치를 모두 비울까요?",
-    resetAllBtn: "참석자, 코트, 참여 횟수를 전부 초기화할까요?",
-    completeGameBtn: "현재 배치를 게임 종료 처리하고 참여 횟수에 반영할까요?",
-  };
-  const message = messages[actionKey];
-  if (!message) return true;
-  return window.confirm(message);
-}
-
 document.getElementById("addParticipantsBtn").addEventListener("click", addParticipants);
 document.getElementById("addCourtBtn").addEventListener("click", addCourt);
 document.getElementById("recommendPlacementBtn").addEventListener("click", recommendPlacement);
-document.getElementById("completeGameBtn").addEventListener("click", () => {
-  if (!confirmTopAction("completeGameBtn")) return;
-  completeCurrentGame();
+document.getElementById("completeGameBtn").addEventListener("click", completeCurrentGame);
+document.getElementById("mobileCompleteBtn").addEventListener("click", completeCurrentGame);
+document.getElementById("clearCourtsBtn").addEventListener("click", clearCourts);
+document.getElementById("resetAllBtn").addEventListener("click", resetAll);
+document.getElementById("undoBtn").addEventListener("click", undo);
+document.getElementById("mobileUndoBtn").addEventListener("click", undo);
+document.getElementById("participantSearch").addEventListener("input", e => {
+  searchKeyword = e.target.value.trim();
+  renderParticipants();
 });
-document.getElementById("clearCourtsBtn").addEventListener("click", () => {
-  if (!confirmTopAction("clearCourtsBtn")) return;
-  clearCourts();
-});
-document.getElementById("resetAllBtn").addEventListener("click", () => {
-  if (!confirmTopAction("resetAllBtn")) return;
-  resetAll();
-});
-document.getElementById("playerInput").addEventListener("keydown", (e) => {
+document.getElementById("playerInput").addEventListener("keydown", e => {
   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) addParticipants();
 });
 
