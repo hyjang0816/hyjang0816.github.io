@@ -21,13 +21,14 @@
   <meta name="twitter:image" content="https://cdn.pixabay.com/photo/2020/10/04/13/00/shuttlecocks-5626284_1280.jpg" />
   <link rel="stylesheet" href="assets/css/styles.css" />
   <link rel="stylesheet" href="assets/css/touch-drag.css" />
+  <link rel="stylesheet" href="assets/css/weight-system.css" />
 </head>
 <body>
   <div class="page">
     <header class="topbar">
       <div>
         <h1>배드민턴 운영용 사이트</h1>
-        <div class="subtitle">게임 횟수와 실력 등급을 고려해 코트를 공정하게 자동 편성합니다.</div>
+        <div class="subtitle">게임 횟수와 1~10 가중치를 고려해 코트를 공정하게 자동 편성합니다.</div>
       </div>
       <div class="actions">
         <button class="btn" id="undoBtn" disabled>실행 취소</button>
@@ -83,7 +84,7 @@
               <textarea id="playerInput" rows="3" placeholder="쉼표 또는 줄바꿈으로 여러 명 입력"></textarea>
               <button class="btn" id="addParticipantsBtn">추가</button>
             </div>
-            <div class="helper">동명이인은 별도 참가자로 등록할 수 있으며, 이름 옆 등급을 눌러 A~D로 변경할 수 있습니다.</div>
+            <div class="helper">동명이인은 별도 참가자로 등록할 수 있으며, 가중치는 1~10 범위이고 기본값은 5입니다.</div>
           </div>
         </div>
       </aside>
@@ -99,5 +100,6 @@
   <script src="assets/js/allow-duplicate-placement.js"></script>
   <script src="assets/js/unassigned-waitlist.js"></script>
   <script src="assets/js/touch-longpress-drag.js"></script>
+  <script src="assets/js/weight-system.js"></script>
 </body>
 </html>
