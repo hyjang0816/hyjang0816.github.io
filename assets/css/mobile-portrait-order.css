@@ -1,0 +1,6 @@
+/* 스마트폰 세로 화면: 참석자 입력 영역을 목록 가장 아래로 배치 */
+@media (max-width: 700px) and (orientation: portrait) {
+  .participant-card { order: 1; }
+  .placed-card { order: 2; }
+  .participant-input-card { order: 3; }
+}
